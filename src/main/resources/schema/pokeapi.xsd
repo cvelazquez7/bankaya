@@ -144,4 +144,12 @@
             <xs:element name="location_area_encounters" type="xs:string"/>
         </xs:sequence>
     </xs:complexType>
+
+    <xs:complexType name="ServiceException">
+        <xs:sequence>
+            <xs:element name="code" type="xs:string"/>
+            <xs:element name="message" type="xs:string"/>
+            <xs:element name="http_status_code" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
 </xs:schema>
