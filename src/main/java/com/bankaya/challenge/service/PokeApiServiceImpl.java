@@ -2,8 +2,13 @@ package com.bankaya.challenge.service;
 
 
 import challenge.carlosvelazquez.pokeapi.*;
+import com.bankaya.challenge.domain.RequestEntity;
+import com.bankaya.challenge.event.SaveRequestEvent;
 import com.bankaya.challenge.mapper.PokeApiMapper;
+import com.bankaya.challenge.repository.RequestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -12,7 +17,10 @@ import org.springframework.web.client.RestTemplate;
 public class PokeApiServiceImpl implements PokeApiService {
     private final RestTemplate restTemplate;
     private final PokeApiMapper pokeApiMapper;
-    private static final String POKE_API_BASE_PATH = "https://pokeapi.co/api/v2/pokemon";
+    private final RequestRepository requestRepository;
+
+    @Value("${pokeapi.base-path}")
+    private String pokeApiBasePath;
 
     /**
      * Invoke original REST API
@@ -21,7 +29,7 @@ public class PokeApiServiceImpl implements PokeApiService {
      * @return Pokemon instance
      */
     public Pokemon invokeApi(String pokemonName) {
-        return restTemplate.getForObject(String.format("%s/%s", POKE_API_BASE_PATH, pokemonName), Pokemon.class);
+        return restTemplate.getForObject(String.format("%s/%s", pokeApiBasePath, pokemonName), Pokemon.class);
     }
 
     @Override
@@ -53,4 +61,18 @@ public class PokeApiServiceImpl implements PokeApiService {
     public GetLocationAreaEncountersResponse getLocationAreaEncounters(GetLocationAreaEncountersRequest request) {
         return pokeApiMapper.mapLocationAreaEncounters(invokeApi(request.getName()));
     }
+
+    /**
+     * Persists the request
+     *
+     * @param event generated event
+     */
+    @EventListener
+    public void saveRequestHandler(SaveRequestEvent event) {
+        RequestEntity requestEntity = new RequestEntity();
+        requestEntity.setMethod(event.getMethod());
+        requestEntity.setIpAddress(event.getIpAddress());
+        requestRepository.save(requestEntity);
+    }
+
 }
